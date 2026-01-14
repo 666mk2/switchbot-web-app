@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { controlDevice } from '@/lib/switchbot';
+import { controlDevice, SwitchBotError } from '@/lib/switchbot';
 import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
@@ -19,14 +19,15 @@ export async function POST(
     { params }: { params: { deviceId: string } }
 ) {
     try {
+        const { deviceId } = params; // Destructure deviceId from params
         const { command, parameter, commandType, deviceName, source } = await request.json();
 
         // Log User Action from UI
         if (source === 'UI') {
-            console.log(`📝 [${getTimestamp()}] [User Action] Device Control: ${deviceName || params.deviceId} -> ${command}`);
+            console.log(`📝 [${getTimestamp()}] [User Action] Device Control: ${deviceName || deviceId} -> ${command}`);
         }
 
-        const result = await controlDevice(params.deviceId, command, parameter, commandType);
+        await controlDevice(deviceId, command, parameter, commandType); // Remove 'result' and use destructured deviceId
 
         // Log to history directly (No fetch to avoid network issues)
         try {
@@ -65,10 +66,15 @@ export async function POST(
             console.error(`❌ [${getTimestamp()}] History direct write error:`, e);
         }
 
-        return NextResponse.json(result);
+        // Return success response as per the provided code edit snippet
+        return NextResponse.json({ success: true });
     } catch (error: unknown) {
+        if (error instanceof SwitchBotError) {
+            console.error(`❌ [${getTimestamp()}] SwitchBot API Error controlling device (${params.deviceId}):`, error.message);
+            return NextResponse.json({ error: error.message }, { status: error.statusCode });
+        }
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        console.error(`❌ [${getTimestamp()}] Error controlling device:`, error);
+        console.error(`❌ [${getTimestamp()}] Error controlling device (${params.deviceId}):`, error);
         return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }

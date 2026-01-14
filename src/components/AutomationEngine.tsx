@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { AutomationRule, Condition, Trigger, UserVariable } from '@/types/automation';
 import { SwitchBotDevice } from '@/lib/switchbot';
 
@@ -54,7 +54,7 @@ export default function AutomationEngine({ devices }: AutomationEngineProps) {
     // ---------------------------------------------------------
     // ルール評価ロジック (共通)
     // ---------------------------------------------------------
-    const evaluateRules = async () => {
+    const evaluateRules = useCallback(async () => {
         const now = new Date();
         const hours = now.getHours().toString().padStart(2, '0');
         const minutes = now.getMinutes().toString().padStart(2, '0');
@@ -270,7 +270,7 @@ export default function AutomationEngine({ devices }: AutomationEngineProps) {
                 // console.log(`⏳ [${getTimestamp()}] Rule "${rule.name}" is in cooldown.`);
             }
         }
-    };
+    }, [devices]);
 
     useEffect(() => {
         // ---------------------------------------------------------
@@ -438,7 +438,7 @@ export default function AutomationEngine({ devices }: AutomationEngineProps) {
             clearInterval(fastInterval);
             clearInterval(deviceInterval);
         };
-    }, [devices]);
+    }, [devices, evaluateRules]);
 
     return null;
 }

@@ -1,2 +1,2 @@
 @echo off
-code --remote ssh-remote+<USER>@<IP_OR_HOSTNAME> /home/<USER>/switchbot-web-app
+code --remote ssh-remote+pi-user@pi4-sb1 /home/pi-user/switchbot-web-app
